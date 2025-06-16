@@ -12,6 +12,7 @@ public class BroadcastServer {
 
         String usageMessage = "Usage: broadcast-server <command>";
         String startMessage = "Usage: broadcast-server start -p <port>";
+        String connectMessage = "Usage: broadcast-server connect -m <message>";
         int port = 0;
         String ip = "127.0.0.1";
         List<String> commands = List.of(new String[]{"start", "connect"});
@@ -35,9 +36,18 @@ public class BroadcastServer {
                             System.out.println(startMessage);
                         }
                     } else if (args[1].equalsIgnoreCase("connect")) {
-                        HostClient hostClient = new HostClient();
-                        hostClient.startConnection(ip, 8080);
-                        hostClient.sendMessage("hello, server!");
+                        try {
+                            if (args[2].equalsIgnoreCase("-m")) {
+                                String message = args[3];
+                                HostClient hostClient = new HostClient();
+                                hostClient.startConnection(ip, 8080);
+                                hostClient.sendMessage(message);
+                            } else {
+                                System.out.println(connectMessage);
+                            }
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            System.out.println(startMessage);
+                        }
                     } else {
                         System.out.println(usageMessage);
                     }
@@ -68,9 +78,10 @@ class HostServer {
             System.out.println("received connection from client on port " + port);
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            String msg;
 
-            if (in.readLine() != null) {
-                out.println("hello, client!");
+            if ((msg = in.readLine()) != null) {
+                out.println(msg);
             }
 
         } catch (IOException e) {

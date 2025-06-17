@@ -4,7 +4,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 
 public class BroadcastServer {
@@ -13,9 +15,10 @@ public class BroadcastServer {
         String usageMessage = "Usage: broadcast-server <command>";
         String startMessage = "Usage: broadcast-server start -p <port>";
         String connectMessage = "Usage: broadcast-server connect -m <message>";
+        Scanner scanner = new Scanner(System.in);
         int port = 0;
         String ip = "127.0.0.1";
-        List<String> commands = List.of(new String[]{"start", "connect"});
+        List<String> commands = List.of(new String[]{"start", "connect", "message"});
 
         if (args.length == 2 || args.length == 4) {
 
@@ -36,17 +39,26 @@ public class BroadcastServer {
                             System.out.println(startMessage);
                         }
                     } else if (args[1].equalsIgnoreCase("connect")) {
-                        try {
-                            if (args[2].equalsIgnoreCase("-m")) {
-                                String message = args[3];
-                                HostClient hostClient = new HostClient();
-                                hostClient.startConnection(ip, 8080);
+                        if (args[2].equalsIgnoreCase("-p")) {
+                            int connectionPort = Integer.parseInt(args[3]);
+                            String message;
+                            HostClient hostClient = new HostClient();
+                            hostClient.startConnection(ip, connectionPort);
+                            while (true) {
+                                scanner.reset();
+                                message = scanner.nextLine();
+                                if ((message).equals("exit")) {
+                                    scanner.close();
+                                    hostClient.sendMessage(message);
+                                    hostClient.stopConnection();
+                                    break;
+                                }
+
                                 hostClient.sendMessage(message);
-                            } else {
-                                System.out.println(connectMessage);
                             }
-                        } catch (ArrayIndexOutOfBoundsException e) {
-                            System.out.println(startMessage);
+
+                        } else {
+                            System.out.println(connectMessage);
                         }
                     } else {
                         System.out.println(usageMessage);
@@ -69,18 +81,27 @@ class HostServer {
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
+    List<Socket> clients = new ArrayList<>();
 
     public void start(int port) {
         try {
             serverSocket = new ServerSocket(port);
             System.out.println("server started on port " + port);
             clientSocket = serverSocket.accept();
+            clients.add(clientSocket);
             System.out.println("received connection from client on port " + port);
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             String msg;
 
-            if ((msg = in.readLine()) != null) {
+            while ((msg = in.readLine()) != null) {
+                if ("exit".equals(msg)) {
+                    out.println("server shutting down.");
+                    stop();
+                    break;
+                } else if ("hello".equals(msg)) {
+                    out.println("hi!");
+                }
                 out.println(msg);
             }
 

@@ -98,10 +98,13 @@ class HostServer {
         private Socket clientSocket;
         private PrintWriter out;
         private BufferedReader in;
+        private static int clientCounter = 1;
+        private String name;
 
         public ClientHandler(Socket socket) {
             this.clientSocket = socket;
             System.out.println("successfully connected to client.");
+            this.name = "client-" + clientCounter++;
             clients.add(this);
         }
 
@@ -123,9 +126,9 @@ class HostServer {
                     System.out.println("received message from client");
                     for (ClientHandler client : clients) {
                         if (client != this) {
-                            client.out.println("client: " + msg);
+                            client.out.println("[" + name + "]: " + msg);
                         } else {
-                            client.out.println("me: " + msg);
+                            client.out.println("[you]: " + msg);
                         }
                     }
                 }

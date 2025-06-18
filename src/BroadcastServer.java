@@ -103,9 +103,6 @@ class HostServer {
 
         public ClientHandler(Socket socket) {
             this.clientSocket = socket;
-            System.out.println("successfully connected to client.");
-            this.name = "client-" + clientCounter++;
-            clients.add(this);
         }
 
         public void run() {
@@ -113,6 +110,12 @@ class HostServer {
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String msg;
+
+                // prompt for name
+                out.println("enter your name: ");
+                this.name = in.readLine();
+                System.out.println("successfully connected to client.");
+                clients.add(this);
 
                 while (true) {
                     msg = in.readLine();
@@ -154,6 +157,13 @@ class HostClient {
             System.out.println("successfully connected to server on port " + port);
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+            // prompt for name
+            System.out.println(in.readLine());
+            Scanner scanner = new Scanner(System.in);
+            String name = scanner.nextLine();
+            out.println(name);
+
         } catch (IOException e) {
             throw new RuntimeException("Failed to start connection.\n" + e.getMessage());
         }

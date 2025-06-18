@@ -78,31 +78,15 @@ public class BroadcastServer {
 class HostServer {
 
     private ServerSocket serverSocket;
-    private Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
-    List<Socket> clients = new ArrayList<>();
+    static List<ClientHandler> clients = new ArrayList<>();
 
     public void start(int port) {
         try {
             serverSocket = new ServerSocket(port);
             System.out.println("server started on port " + port);
-            clientSocket = serverSocket.accept();
-            clients.add(clientSocket);
-            System.out.println("received connection from client on port " + port);
-            out = new PrintWriter(clientSocket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            String msg;
 
-            while ((msg = in.readLine()) != null) {
-                if ("exit".equals(msg)) {
-                    out.println("server shutting down.");
-                    stop();
-                    break;
-                } else if ("hello".equals(msg)) {
-                    out.println("hi!");
-                }
-                out.println(msg);
+            while (true) {
+                    new ClientHandler(serverSocket.accept()).start();
             }
 
         } catch (IOException e) {
@@ -110,18 +94,47 @@ class HostServer {
         }
     }
 
-    public void stop() {
-        try {
-            in.close();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to close input stream.\n" + e.getMessage());
+    private static class ClientHandler extends Thread {
+        private Socket clientSocket;
+        private PrintWriter out;
+        private BufferedReader in;
+
+        public ClientHandler(Socket socket) {
+            this.clientSocket = socket;
+            System.out.println("successfully connected to client.");
+            clients.add(this);
         }
-        out.close();
-        try {
-            serverSocket.close();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to close server.\n" + e.getMessage());
+
+        public void run() {
+            try {
+                out = new PrintWriter(clientSocket.getOutputStream(), true);
+                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                String msg;
+
+                while (true) {
+                    msg = in.readLine();
+                    if (msg == null || msg.equals("exit")) {
+                        System.out.println("disconnecting client");
+                        clientSocket.close();
+                        clients.remove(this);
+                        break;
+                    }
+
+                    System.out.println("received message from client");
+                    for (ClientHandler client : clients) {
+                        if (client != this) {
+                            client.out.println("client: " + msg);
+                        } else {
+                            client.out.println("me: " + msg);
+                        }
+                    }
+                }
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
+
     }
 }
 

@@ -87,19 +87,29 @@ class HostServer {
 
             while (true) {
                     new ClientHandler(serverSocket.accept()).start();
+
+                    if (clients.isEmpty()) {
+                        System.out.println("there are no connected clients.\ndo you want to shut down the server (y or n)?");
+                        Scanner scanner = new Scanner(System.in);
+                        String response = scanner.nextLine();
+                        if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
+                            System.out.println("server shutting down");
+                            serverSocket.close();
+                            break;
+                        }
+                    }
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to start server.\n" + e.getMessage());
+            throw new RuntimeException("failed to start server.\n" + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("something went wrong!");
         }
     }
 
     private static class ClientHandler extends Thread {
-        private Socket clientSocket;
+        private final Socket clientSocket;
         private PrintWriter out;
-        private BufferedReader in;
-        private static int clientCounter = 1;
-        private String name;
 
         public ClientHandler(Socket socket) {
             this.clientSocket = socket;
@@ -108,25 +118,29 @@ class HostServer {
         public void run() {
             try {
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
-                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String msg;
 
                 // prompt for name
                 out.println("enter your name: ");
-                this.name = in.readLine();
-                System.out.println("successfully connected to client.");
+                String name = in.readLine();
+                System.out.println("successfully connected to client \"" + name + "\"");
                 clients.add(this);
 
+                // main logic
                 while (true) {
                     msg = in.readLine();
                     if (msg == null || msg.equals("exit")) {
-                        System.out.println("disconnecting client");
+                        System.out.println("disconnecting client + \"" + name + "\"");
+                        in.close();
+                        out.close();
                         clientSocket.close();
                         clients.remove(this);
+                        System.out.println("successfully disconnected client + \"" + name + "\"");
                         break;
                     }
 
-                    System.out.println("received message from client");
+                    System.out.println("received message from client \"" + name + "\"");
                     for (ClientHandler client : clients) {
                         if (client != this) {
                             client.out.println("[" + name + "]: " + msg);
@@ -136,10 +150,15 @@ class HostServer {
                     }
                 }
 
+                if (clients.isEmpty()) {
+                    this.interrupt();
+                }
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
+
 
     }
 }
@@ -165,7 +184,7 @@ class HostClient {
             out.println(name);
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to start connection.\n" + e.getMessage());
+            throw new RuntimeException("client error: failed to start connection.\n");
         }
     }
 
@@ -174,7 +193,7 @@ class HostClient {
         try {
             System.out.println(in.readLine());
         } catch (IOException e) {
-            throw new RuntimeException("Failed to get a reply from server.\n" + e.getMessage());
+            throw new RuntimeException("failed to get a reply from server.\n" + e.getMessage());
         }
     }
 

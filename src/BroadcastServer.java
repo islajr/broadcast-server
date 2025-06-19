@@ -103,7 +103,7 @@ class HostServer {
         } catch (IOException e) {
             throw new RuntimeException("failed to start server.\n" + e.getMessage());
         } catch (Exception e) {
-            System.out.println("something went wrong!");
+            throw new RuntimeException("something went wrong!");
         }
     }
 
@@ -204,7 +204,7 @@ class HostClient {
             out.close();
             clientSocket.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("failed to shut client down.");
         }
 
     }

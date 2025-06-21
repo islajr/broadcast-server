@@ -1,7 +1,5 @@
 # Broadcast Server
 
-URL: https://roadmap.sh/projects/broadcast-server
-
 This is a simple TCP broadcast server that allows clients to connect to it and send messages that will be broadcasted to all connected clients.
 
 It makes use of sockets from the [java.net](https://docs.oracle.com/javase/8/docs/api/java/net/package-summary.html) package and good old IO programming.
@@ -54,4 +52,6 @@ To terminate the operation and shut down the server, disconnect all connected cl
 This action will cause the server to prompt you for a disconnection decision.
 
 When confronted with the message, although it is self-explanatory, press 'y' or 'yes' to shut down the server.
+
+*-- This project idea was sourced from [Roadmap.sh](https://roadmap.sh/projects/broadcast-server)*
 
